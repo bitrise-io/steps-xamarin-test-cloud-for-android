@@ -1,0 +1,154 @@
+title: "Submit to Xamarin Test Cloud"
+summary: "Submit to Xamarin Test Cloud"
+description: |-
+  Submit test results to Xamarin Test Cloud.
+website:
+source_code_url:
+support_url:
+host_os_tags:
+  - osx-10.10
+project_type_tags:
+  - xamarin
+type_tags:
+  - test
+is_requires_admin_user: true
+is_always_run: false
+is_skippable: false
+dependencies: []
+run_if: ""
+inputs:
+  - xamarin_project:
+    opts:
+      title: Path to Xamarin Project
+      description: |
+        Path to Xamarin Project
+      is_required: true
+      is_expand: true
+  - xamarin_test_project:
+    opts:
+      title: Path to Xamarin UITest Project
+      description: |
+        Path to Xamarin UITest Project
+      is_required: true
+      is_expand: true
+  - xamarin_configuration: "Debug"
+    opts:
+      title: Xamarin project configuration
+      description: |
+        Xamarin project configuration
+      is_required: true
+      is_expand: true
+  - xamarin_platform: "iPhoneSimulator"
+    opts:
+      title: Xamarin platform
+      description: |
+        Xamarin platform
+      is_required: true
+      is_expand: true
+  - is_clean_build: "yes"
+    opts:
+      title: "Do a clean before the archive?"
+      value_options:
+        - "yes"
+        - "no"
+      is_required: true
+      is_expand: true
+      is_dont_change_value: false
+  - api_key:
+    opts:
+      title: "Api key"
+      summary: "Api key"
+      description: |
+        Api key.
+      is_expand: true
+      is_required: true
+      is_dont_change_value: false
+  - user:
+    opts:
+      title: "User email"
+      summary: "User email"
+      description: |
+        The e-mail address of the team member submitting the tests.
+      is_expand: true
+      is_required: true
+      is_dont_change_value: false
+  - devices:
+    opts:
+      title: "Device selection id"
+      summary: "Device selection id"
+      description: |
+        Device selection id from the Test Cloud upload dialog.
+      is_expand: true
+      is_required: true
+      is_dont_change_value: false
+  - app_name:
+    opts:
+      title: "App name to create or add test to"
+      summary: "App name to create or add test to"
+      description: |
+        App name to create or add test to.
+      is_expand: true
+      is_required: false
+      is_dont_change_value: false
+  - async: "no"
+    opts:
+      title: "Don't wait for cloud test run to complete"
+      summary: "Don't wait for cloud test run to complete"
+      description: |
+        Don't wait for cloud test run to complete.
+      is_expand: true
+      is_required: false
+      is_dont_change_value: false
+      value_options:
+      - "yes"
+      - "no"
+  - category:
+    opts:
+      title: "NUnit category to run"
+      summary: "NUnit category to run"
+      description: |
+        NUnit category to run.
+      is_expand: true
+      is_required: false
+      is_dont_change_value: false
+  - fixture:
+    opts:
+      title: "NUnit fixture / namespace to run"
+      summary: "NUnit fixture / namespace to run"
+      description: |
+        NUnit fixture / namespace to run.
+      is_expand: true
+      is_required: false
+      is_dont_change_value: false
+  - series: "master"
+    opts:
+      title: "Test series"
+      summary: "Test series"
+      description: |
+        Test series.
+      is_expand: true
+      is_required: false
+      is_dont_change_value: false
+  - parallelization:
+    opts:
+      title: "Run tests in parallel by method/fixture"
+      summary: "Run tests in parallel by method/fixture"
+      description: |
+        Run tests in parallel by method/fixture.
+      is_expand: true
+      is_required: false
+      is_dont_change_value: false
+      value_options:
+      - by_test_fixture
+      - by_test_chunk
+outputs:
+  - BITRISE_XAMARIN_TEST_RESULT:
+    opts:
+      title: Result of the tests. 'succeeded' or 'failed'.
+      value_options:
+      - succeeded
+      - failed
+  - BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT:
+    opts:
+      title: ""
+      description: ""

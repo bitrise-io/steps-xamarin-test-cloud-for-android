@@ -1,7 +1,7 @@
-title: "Submit to Xamarin Test Cloud"
-summary: "Submit to Xamarin Test Cloud"
+title: "Submit apk to Xamarin Test Cloud"
+summary: "Submit apk to Xamarin Test Cloud"
 description: |-
-  Submit test results to Xamarin Test Cloud.
+  Submit apk to Xamarin Test Cloud.
 website: https://github.com/bitrise-io/steps-xamarin-test-cloud-for-android
 source_code_url: https://github.com/bitrise-io/steps-xamarin-test-cloud-for-android
 support_url: https://github.com/bitrise-io/steps-xamarin-test-cloud-for-android/issues
@@ -31,30 +31,30 @@ inputs:
         Path to Xamarin UITest Project
       is_required: true
       is_expand: true
-  - xamarin_configuration: "Debug"
+  - xamarin_configuration: Release
     opts:
       title: Xamarin project configuration
       description: |
         Xamarin project configuration
       is_required: true
       is_expand: true
-  - xamarin_platform: "iPhoneSimulator"
+  - xamarin_platform: AnyCPU
     opts:
       title: Xamarin platform
       description: |
         Xamarin platform
       is_required: true
       is_expand: true
-  - is_clean_build: "yes"
+  - is_clean_build: yes
     opts:
       title: "Do a clean before the archive?"
       value_options:
-        - "yes"
-        - "no"
+        - yes
+        - no
       is_required: true
       is_expand: true
       is_dont_change_value: false
-  - api_key:
+  - test_cloud_api_key:
     opts:
       title: "Api key"
       summary: "Api key"
@@ -63,7 +63,7 @@ inputs:
       is_expand: true
       is_required: true
       is_dont_change_value: false
-  - user:
+  - xamarin_user:
     opts:
       title: "User email"
       summary: "User email"
@@ -72,7 +72,7 @@ inputs:
       is_expand: true
       is_required: true
       is_dont_change_value: false
-  - devices:
+  - test_cloud_devices:
     opts:
       title: "Device selection id"
       summary: "Device selection id"
@@ -81,7 +81,7 @@ inputs:
       is_expand: true
       is_required: true
       is_dont_change_value: false
-  - app_name:
+  - test_cloud_app_name:
     opts:
       title: "App name to create or add test to"
       summary: "App name to create or add test to"
@@ -90,7 +90,7 @@ inputs:
       is_expand: true
       is_required: false
       is_dont_change_value: false
-  - async: "no"
+  - test_cloud_is_async: yes
     opts:
       title: "Don't wait for cloud test run to complete"
       summary: "Don't wait for cloud test run to complete"
@@ -100,9 +100,9 @@ inputs:
       is_required: false
       is_dont_change_value: false
       value_options:
-      - "yes"
-      - "no"
-  - category:
+      - yes
+      - no
+  - test_cloud_category:
     opts:
       title: "NUnit category to run"
       summary: "NUnit category to run"
@@ -111,7 +111,7 @@ inputs:
       is_expand: true
       is_required: false
       is_dont_change_value: false
-  - fixture:
+  - test_cloud_fixture:
     opts:
       title: "NUnit fixture / namespace to run"
       summary: "NUnit fixture / namespace to run"
@@ -120,7 +120,7 @@ inputs:
       is_expand: true
       is_required: false
       is_dont_change_value: false
-  - series: "master"
+  - test_cloud_series: "master"
     opts:
       title: "Test series"
       summary: "Test series"
@@ -129,7 +129,7 @@ inputs:
       is_expand: true
       is_required: false
       is_dont_change_value: false
-  - parallelization:
+  - test_cloud_parallelization:
     opts:
       title: "Run tests in parallel by method/fixture"
       summary: "Run tests in parallel by method/fixture"

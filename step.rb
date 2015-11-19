@@ -18,6 +18,12 @@ def error_with_message(message)
   puts "\e[31m#{message}\e[0m"
 end
 
+def to_bool(value)
+  return true if value == true || value =~ (/^(true|t|yes|y|1)$/i)
+  return false if value == false || value.nil? || value == '' || value =~ (/^(false|f|no|n|0)$/i)
+  fail_with_message("Invalid value for Boolean: \"#{value}\"")
+end
+
 def get_related_solutions(project_path)
   project_name = File.basename(project_path)
   project_dir = File.dirname(project_path)
@@ -119,7 +125,7 @@ options = {
   user: nil,
   devices: nil,
   app_name: nil,
-  async: nil,
+  async: true,
   category: nil,
   fixture: nil,
   series: nil,
@@ -132,12 +138,12 @@ parser = OptionParser.new do|opts|
   opts.on('-t', '--test project', 'Test project') { |t| options[:test_project] = t unless t.to_s == '' }
   opts.on('-c', '--configuration config', 'Configuration') { |c| options[:configuration] = c unless c.to_s == '' }
   opts.on('-p', '--platform platform', 'Platform') { |p| options[:platform] = p unless p.to_s == '' }
-  opts.on('-i', '--clean build', 'Clean build') { |i| options[:clean_build] = false if i.to_s == 'no' }
+  opts.on('-i', '--clean build', 'Clean build') { |i| options[:clean_build] = false if to_bool(i) == false }
   opts.on('-a', '--api key', 'Api key') { |a| options[:api_key] = a unless a.to_s == '' }
   opts.on('-u', '--user user', 'User') { |u| options[:user] = u unless u.to_s == '' }
   opts.on('-d', '--devices devices', 'Devices') { |d| options[:devices] = d unless d.to_s == '' }
   opts.on('-n', '--app name', 'App name') { |n| options[:app_name] = n unless n.to_s == '' }
-  opts.on('-y', '--async async', 'Async') { |y| options[:async] = y unless y.to_s == '' }
+  opts.on('-y', '--async async', 'Async') { |y| options[:async] = false unless to_bool(y) == false }
   opts.on('-e', '--category category', 'Category') { |e| options[:category] = e unless e.to_s == '' }
   opts.on('-f', '--fixture fixture', 'Fixture') { |f| options[:fixture] = f unless f.to_s == '' }
   opts.on('-r', '--series series', 'Series') { |r| options[:series] = r unless r.to_s == '' }
@@ -240,7 +246,7 @@ request += " --user #{options[:user]}"
 request += " --assembly-dir #{assembly_dir}"
 request += " --devices #{options[:devices]}"
 request += " --app-name \"#{options[:app_name]}\"" if options[:app_name]
-request += ' --async' if options[:async] && options[:async].eql?('yes')
+request += ' --async' if options[:async]
 request += " --category #{options[:category]}" if options[:category]
 request += " --fixture #{options[:fixture]}" if options[:fixture]
 request += " --series #{options[:series]}" if options[:series]

@@ -90,7 +90,7 @@ inputs:
       is_expand: true
       is_required: false
       is_dont_change_value: false
-  - async: no
+  - async: yes
     opts:
       title: "Don't wait for cloud test run to complete"
       summary: "Don't wait for cloud test run to complete"

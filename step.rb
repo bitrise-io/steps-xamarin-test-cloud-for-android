@@ -1,6 +1,5 @@
 require 'optparse'
 require 'pathname'
-require 'tmpdir'
 
 @nuget = '/Library/Frameworks/Mono.framework/Versions/Current/bin/nuget'
 

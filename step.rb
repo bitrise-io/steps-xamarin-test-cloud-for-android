@@ -171,7 +171,7 @@ puts " * test_project: #{options[:test_project]}"
 puts " * configuration: #{options[:configuration]}"
 puts " * platform: #{options[:platform]}"
 puts " * clean_build: #{options[:clean_build]}"
-puts " * api_key: ***"
+puts ' * api_key: ***'
 puts " * user: #{options[:user]}"
 puts " * devices: #{options[:devices]}"
 puts " * app_name: #{options[:app_name]}"

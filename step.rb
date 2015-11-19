@@ -143,7 +143,7 @@ parser = OptionParser.new do|opts|
   opts.on('-u', '--user user', 'User') { |u| options[:user] = u unless u.to_s == '' }
   opts.on('-d', '--devices devices', 'Devices') { |d| options[:devices] = d unless d.to_s == '' }
   opts.on('-n', '--app name', 'App name') { |n| options[:app_name] = n unless n.to_s == '' }
-  opts.on('-y', '--async async', 'Async') { |y| options[:async] = false unless to_bool(y) == false }
+  opts.on('-y', '--async async', 'Async') { |y| options[:async] = false if to_bool(y) == false }
   opts.on('-e', '--category category', 'Category') { |e| options[:category] = e unless e.to_s == '' }
   opts.on('-f', '--fixture fixture', 'Fixture') { |f| options[:fixture] = f unless f.to_s == '' }
   opts.on('-r', '--series series', 'Series') { |r| options[:series] = r unless r.to_s == '' }

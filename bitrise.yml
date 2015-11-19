@@ -41,15 +41,15 @@ workflows:
         - xamarin_configuration: $BITRISE_XAMARIN_CONFIGURATION
         - xamarin_platform: $BITRISE_XAMARIN_PLATFORM
         - is_clean_build: yes
-        - api_key: $API_KEY
-        - user: $USER
-        - devices: $DEVICES
-        - app_name: $APP_NAME
-        - async: $ASYNC
-        - category: $CATEGORY
-        - fixture: $FIXTURE
-        - series: $SERIES
-        - parallelization: $PARALLELIZATION
+        - test_cloud_api_key: $API_KEY
+        - xamarin_user: $USER
+        - test_cloud_devices: $DEVICES
+        - test_cloud_app_name: $APP_NAME
+        - test_cloud_is_async: $ASYNC
+        - test_cloud_category: $CATEGORY
+        - test_cloud_fixture: $FIXTURE
+        - test_cloud_series: $SERIES
+        - test_cloud_parallelization: $PARALLELIZATION
     - script:
         title: Step output test
         inputs:

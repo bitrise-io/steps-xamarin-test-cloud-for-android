@@ -24,26 +24,6 @@ def to_bool(value)
   fail_with_message("Invalid value for Boolean: \"#{value}\"")
 end
 
-def get_related_solutions(project_path)
-  project_name = File.basename(project_path)
-  project_dir = File.dirname(project_path)
-  root_dir = File.dirname(project_dir)
-  solutions = Dir[File.join(root_dir, '/**/*.sln')]
-  return [] unless solutions
-
-  related_solutions = []
-  solutions.each do |solution|
-    File.readlines(solution).join("\n").scan(/Project\(\"[^\"]*\"\)\s*=\s*\"[^\"]*\",\s*\"([^\"]*.csproj)\"/).each do |match|
-      a_project = match[0].strip.gsub(/\\/, '/')
-      a_project_name = File.basename(a_project)
-
-      related_solutions << solution if a_project_name == project_name
-    end
-  end
-
-  return related_solutions
-end
-
 def archive_project!(project_path, configuration, platform, sign_apk)
   # /t:SignAndroidPackage -> generate a signed and unsigned APK
   # /t:PackageForAndroid -> generate a unsigned APK
@@ -180,24 +160,6 @@ puts " * category: #{options[:category]}"
 puts " * fixture: #{options[:fixture]}"
 puts " * series: #{options[:series]}"
 puts " * parallelization: #{options[:parallelization]}"
-
-#
-# Restoring nuget packages
-puts ''
-puts '==> Restoring nuget packages'
-project_solutions = get_related_solutions(options[:project])
-puts "No solution found for project: #{options[:project]}, terminating nuget restore..." if project_solutions.empty?
-
-test_project_solutions = get_related_solutions(options[:test_project])
-puts "No solution found for project: #{options[:test_project]}, terminating nuget restore..." if test_project_solutions.empty?
-
-solutions = project_solutions | test_project_solutions
-solutions.each do |solution|
-  puts "(i) solution: #{solution}"
-  puts "#{@nuget} restore #{solution}"
-  system("#{@nuget} restore #{solution}")
-  error_with_message('Failed to restore nuget package') unless $?.success?
-end
 
 if options[:clean_build]
   #

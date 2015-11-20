@@ -88,7 +88,6 @@ def clean_project!(project_path, configuration)
   fail_with_message('Clean failed') unless $?.success?
 end
 
-
 # -----------------------
 # --- main
 # -----------------------
@@ -104,12 +103,11 @@ options = {
   api_key: nil,
   user: nil,
   devices: nil,
-  app_name: nil,
   async: true,
-  category: nil,
-  fixture: nil,
-  series: nil,
-  parallelization: nil
+  series: 'master',
+  parallelization: nil,
+  sign_parameters: nil,
+  other_parameters: nil
 }
 
 parser = OptionParser.new do|opts|
@@ -122,12 +120,11 @@ parser = OptionParser.new do|opts|
   opts.on('-a', '--api key', 'Api key') { |a| options[:api_key] = a unless a.to_s == '' }
   opts.on('-u', '--user user', 'User') { |u| options[:user] = u unless u.to_s == '' }
   opts.on('-d', '--devices devices', 'Devices') { |d| options[:devices] = d unless d.to_s == '' }
-  opts.on('-n', '--app name', 'App name') { |n| options[:app_name] = n unless n.to_s == '' }
   opts.on('-y', '--async async', 'Async') { |y| options[:async] = false if to_bool(y) == false }
-  opts.on('-e', '--category category', 'Category') { |e| options[:category] = e unless e.to_s == '' }
-  opts.on('-f', '--fixture fixture', 'Fixture') { |f| options[:fixture] = f unless f.to_s == '' }
   opts.on('-r', '--series series', 'Series') { |r| options[:series] = r unless r.to_s == '' }
   opts.on('-l', '--parallelization parallelization', 'Parallelization') { |l| options[:parallelization] = l unless l.to_s == '' }
+  opts.on('-g', '--sign parameters', 'Sign') { |g| options[:sign_parameters] = g unless g.to_s == '' }
+  opts.on('-m', '--other parameters', 'Other') { |m| options[:other_parameters] = m unless m.to_s == '' }
   opts.on('-h', '--help', 'Displays Help') do
     exit
   end
@@ -141,6 +138,7 @@ fail_with_message('platform not specified') unless options[:platform]
 fail_with_message('api_key not specified') unless options[:api_key]
 fail_with_message('user not specified') unless options[:user]
 fail_with_message('devices not specified') unless options[:devices]
+fail_with_message('series not specified') unless options[:series]
 
 #
 # Print configs
@@ -154,12 +152,11 @@ puts " * clean_build: #{options[:clean_build]}"
 puts ' * api_key: ***'
 puts " * user: #{options[:user]}"
 puts " * devices: #{options[:devices]}"
-puts " * app_name: #{options[:app_name]}"
 puts " * async: #{options[:async]}"
-puts " * category: #{options[:category]}"
-puts " * fixture: #{options[:fixture]}"
 puts " * series: #{options[:series]}"
 puts " * parallelization: #{options[:parallelization]}"
+puts " * sign_parameters: #{options[:sign_parameters]}"
+puts " * other_parameters: #{options[:other_parameters]}"
 
 if options[:clean_build]
   #
@@ -175,9 +172,13 @@ end
 
 #
 # Archive project
+sign_apk = true
+sign_apk = false if options[:sign_parameters]
+sign_apk = false if options[:other_parameters] && options[:other_parameters].include?('--sign-info')
+
 puts
 puts "==> Archive project: #{options[:project]}"
-apk_path = archive_project!(options[:project], options[:configuration], options[:platform], true)
+apk_path = archive_project!(options[:project], options[:configuration], options[:platform], sign_apk)
 fail_with_message('Failed to locate apk path') unless apk_path && File.exist?(apk_path)
 puts "  (i) apk_path path: #{apk_path}"
 
@@ -203,23 +204,23 @@ result_log = File.join(work_dir, 'TestResult.xml')
 
 #
 # Build Request
-request = "mono #{test_cloud} submit #{apk_path} #{options[:api_key]}"
+request = "mono #{test_cloud} submit #{apk_path} #{options[:api_key]}" unless options[:sign_parameters]
+request = "mono #{test_cloud} submit #{apk_path} #{options[:api_key]} #{options[:sign_parameters]}" if options[:sign_parameters]
 request += " --user #{options[:user]}"
 request += " --assembly-dir #{assembly_dir}"
 request += " --devices #{options[:devices]}"
-request += " --app-name \"#{options[:app_name]}\"" if options[:app_name]
 request += ' --async' if options[:async]
-request += " --category #{options[:category]}" if options[:category]
-request += " --fixture #{options[:fixture]}" if options[:fixture]
 request += " --series #{options[:series]}" if options[:series]
 request += " --nunit-xml #{result_log}"
 if options[:parallelization]
   request += ' --fixture-chunk' if options[:parallelization] == 'by_test_fixture'
   request += ' --test-chunk' if options[:parallelization] == 'by_test_chunk'
 end
+request += " #{options[:other_parameters]}"
 
 puts
 puts "request: #{request}"
+
 system(request)
 test_success = $?.success?
 

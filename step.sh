@@ -8,12 +8,11 @@ ruby "${THIS_SCRIPTDIR}/step.rb" \
   -c "${xamarin_configuration}" \
   -p "${xamarin_platform}" \
   -i "${is_clean_build}" \
-  -a "${test_cloud_api_key}" \
   -u "${xamarin_user}" \
+  -a "${test_cloud_api_key}" \
   -d "${test_cloud_devices}" \
-  -n "${test_cloud_app_name}" \
   -y "${test_cloud_is_async}" \
-  -e "${test_cloud_category}" \
-  -f "${test_cloud_fixture}" \
   -r "${test_cloud_series}" \
-  -l "${test_cloud_parallelization}"
+  -l "${test_cloud_parallelization}" \
+  -g "${sign_parameters}" \
+  -m "${other_parameters}"

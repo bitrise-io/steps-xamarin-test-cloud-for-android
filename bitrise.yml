@@ -1,25 +1,20 @@
 format_version: 1.1.0
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
-# app:
-#   envs:
-#   - XAMARIN_PROJECT:
-#   - XAMARIN_TEST_PROJECT:
-#   - BITRISE_XAMARIN_CONFIGURATION:
-#   - BITRISE_XAMARIN_PLATFORM:
-#   - API_KEY:
-#   - USER:
-#   - DEVICES:
-#   - APP_NAME:
-#   - ASYNC:
-#   - CATEGORY:
-#   - FIXTURE:
-#   - NUNIT_XML:
-#   - SERIES:
-#   - DSYM:
-#   - PARALLELIZATION:
-#   - SIGN_PARAMETERS:
-#   - OTHER_PARAMETERS:
+app:
+  envs:
+  - XAMARIN_PROJECT:
+  - XAMARIN_TEST_PROJECT:
+  - BITRISE_XAMARIN_CONFIGURATION:
+  - BITRISE_XAMARIN_PLATFORM:
+  - API_KEY:
+  - USER:
+  - DEVICES:
+  - ASYNC:
+  - SERIES:
+  - PARALLELIZATION:
+  - SIGN_PARAMETERS:
+  - OTHER_PARAMETERS:
 
 workflows:
   test:

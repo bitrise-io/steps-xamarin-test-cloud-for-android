@@ -155,7 +155,7 @@ puts " * devices: #{options[:devices]}"
 puts " * async: #{options[:async]}"
 puts " * series: #{options[:series]}"
 puts " * parallelization: #{options[:parallelization]}"
-puts " * sign_parameters: #{options[:sign_parameters]}"
+puts ' * sign_parameters: ***'
 puts " * other_parameters: #{options[:other_parameters]}"
 
 if options[:clean_build]
@@ -220,7 +220,6 @@ request += " #{options[:other_parameters]}"
 
 puts
 puts "request: #{request}"
-
 system(request)
 test_success = $?.success?
 

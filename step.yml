@@ -2,9 +2,9 @@ title: "Submit apk to Xamarin Test Cloud"
 summary: "Submit apk to Xamarin Test Cloud"
 description: |-
   Submit apk to Xamarin Test Cloud.
-website: https://github.com/bitrise-io/steps-xamarin-test-cloud-for-android
-source_code_url: https://github.com/bitrise-io/steps-xamarin-test-cloud-for-android
-support_url: https://github.com/bitrise-io/steps-xamarin-test-cloud-for-android/issues
+website: https://github.com/bitrise-steplib/steps-xamarin-test-cloud-for-android
+source_code_url: https://github.com/bitrise-steplib/steps-xamarin-test-cloud-for-android
+support_url: https://github.com/bitrise-steplib/steps-xamarin-test-cloud-for-android/issues
 host_os_tags:
   - osx-10.10
 project_type_tags:
@@ -17,7 +17,7 @@ is_skippable: false
 dependencies: []
 run_if: ""
 inputs:
-  - xamarin_project:
+  - xamarin_project: $BITRISE_PROJECT_PATH
     opts:
       title: Path to Xamarin Project
       description: |
@@ -45,12 +45,12 @@ inputs:
         Xamarin platform
       is_required: true
       is_expand: true
-  - is_clean_build: yes
+  - is_clean_build: "yes"
     opts:
       title: "Do a clean before the archive?"
       value_options:
-        - yes
-        - no
+        - "yes"
+        - "no"
       is_required: true
       is_expand: true
       is_dont_change_value: false
@@ -102,7 +102,7 @@ inputs:
       is_expand: true
       is_required: false
       is_dont_change_value: false
-  - test_cloud_parallelization:
+  - test_cloud_parallelization: "none"
     opts:
       title: "Run tests in parallel by method/fixture"
       summary: "Run tests in parallel by method/fixture"
@@ -160,5 +160,5 @@ outputs:
       - failed
   - BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT:
     opts:
-      title: ""
+      title: Result of the tests.
       description: ""

@@ -3,38 +3,30 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - XAMARIN_PROJECT:
-  - XAMARIN_TEST_PROJECT:
-  - BITRISE_XAMARIN_CONFIGURATION:
-  - BITRISE_XAMARIN_PLATFORM:
-  - API_KEY:
-  - USER:
-  - DEVICES:
-  - ASYNC:
-  - SERIES:
-  - PARALLELIZATION:
-  - SIGN_PARAMETERS:
-  - OTHER_PARAMETERS:
+  - XAMARIN_PROJECT: $XAMARIN_PROJECT
+  - BITRISE_XAMARIN_CONFIGURATION: $BITRISE_XAMARIN_CONFIGURATION
+  - BITRISE_XAMARIN_PLATFORM: $BITRISE_XAMARIN_PLATFORM
+  - API_KEY: $API_KEY
+  - USER: $USER
+  - DEVICES: $DEVICES
+  - ASYNC: $ASYNC
+  - SERIES: $SERIES
+  - PARALLELIZATION: $PARALLELIZATION
+  - SIGN_PARAMETERS: $SIGN_PARAMETERS
+  - OTHER_PARAMETERS: $OTHER_PARAMETERS
 
 workflows:
   test:
     steps:
     - change-workdir:
-        title: Switch working dir to test / _tmp dir
-        description: |-
-          To prevent step testing issues, like referencing relative
-          files with just './some-file' in the step's code, which would
-          work for testing the step from this directory directly
-          but would break if the step is included in another `bitrise.yml`.
+        title: Change workdir
         run_if: true
         inputs:
-        - path: ./_tmp
-        - is_create_path: true
+        - path: $BITRISE_SOURCE_DIR
     - path::./:
         title: Step Test
         inputs:
         - xamarin_project: $XAMARIN_PROJECT
-        - xamarin_test_project: $XAMARIN_TEST_PROJECT
         - xamarin_configuration: $BITRISE_XAMARIN_CONFIGURATION
         - xamarin_platform: $BITRISE_XAMARIN_PLATFORM
         - is_clean_build: yes
@@ -47,7 +39,7 @@ workflows:
         - sign_parameters: $SIGN_PARAMETERS
         - other_parameters: $OTHER_PARAMETERS
     - script:
-        title: Step output test
+        title: Output test
         inputs:
         - content: |-
             echo "BITRISE_XAMARIN_TEST_RESULT: $BITRISE_XAMARIN_TEST_RESULT"

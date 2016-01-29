@@ -6,8 +6,6 @@ require_relative 'xamarin-builder/builder'
 # -----------------------
 # --- Constants
 # -----------------------
-@nuget = '/Library/Frameworks/Mono.framework/Versions/Current/bin/nuget'
-
 @work_dir = ENV['BITRISE_SOURCE_DIR']
 @result_log_path = File.join(@work_dir, 'TestResult.xml')
 

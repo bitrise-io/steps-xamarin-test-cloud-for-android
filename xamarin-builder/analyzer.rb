@@ -18,7 +18,7 @@ REGEX_SOLUTION_PROJECTS = /Project\(\"(?<solution_id>[^\"]*)\"\) = \"(?<project_
 REGEX_SOLUTION_GLOBAL_SOLUTION_CONFIG_START = /GlobalSection\(SolutionConfigurationPlatforms\) = preSolution/i
 REGEX_SOLUTION_GLOBAL_SOLUTION_CONFIG = /^\s*(?<config>[^|]*)\|(?<platform>[^|]*) =/i
 REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG_START = /GlobalSection\(ProjectConfigurationPlatforms\) = postSolution/i
-REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG = /(?<project_id>{[^}]*}).(?<config>(\w|\s)*)\|(?<platform>(\w|\s)*)\.Build.* = (?<mapped_config>(\w|\s)*)\|(?<mapped_platform>(\w|\s)*)/i
+REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG = /(?<project_id>{[^}]*}).(?<config>.*)\|(?<platform>.*)\.Build.* = (?<mapped_config>.*)\|(?<mapped_platform>(.)*)/i
 REGEX_SOLUTION_GLOBAL_CONFIG_END = /EndGlobalSection/i
 
 REGEX_PROJECT_GUID = /<ProjectGuid>(?<project_id>.*)<\/ProjectGuid>/i
@@ -27,7 +27,7 @@ REGEX_PROJECT_ASSEMBLY_NAME = /<AssemblyName>(?<assembly_name>.*)<\/AssemblyName
 REGEX_PROJECT_ANDROID_MANIFEST = /<AndroidManifest>(?<manifest_path>.*)<\/AndroidManifest>/i
 REGEX_PROJECT_ANDROID_PACKAGE_NAME = /<manifest.*package=\"(?<package_name>.*)\">/i
 REGEX_PROJECT_MTOUCH_ARCH = /<MtouchArch>(?<arch>.*)<\/MtouchArch>/i
-REGEX_PROJECT_PROPERTY_GROUP_WITH_CONDITION = /<PropertyGroup Condition=\" '\$\(Configuration\)\|\$\(Platform\)' == '(?<config>(\w|\s)*)\|(?<platform>(\w|\s)*)' \">/i
+REGEX_PROJECT_PROPERTY_GROUP_WITH_CONDITION = /<PropertyGroup Condition=\" '\$\(Configuration\)\|\$\(Platform\)' == '(?<config>.*)\|(?<platform>.*)' \">/i
 REGEX_PROJECT_PROPERTY_GROUP_END = /<\/PropertyGroup>/i
 REGEX_PROJECT_OUTPUT_PATH = /<OutputPath>(?<output_path>.*)<\/OutputPath>/i
 REGEX_PROJECT_IPA_PACKAGE = /<IpaPackageName>/i
@@ -98,8 +98,8 @@ class Analyzer
               MDTOOL_PATH,
               generate_archive ? 'archive' : 'build',
               "\"-c:#{project_configuration}\"",
-              @solution[:path],
-              "-p:#{project[:name]}"
+              "\"#{@solution[:path]}\"",
+              "\"-p:#{project[:name]}\""
           ].join(' ')
         when 'android'
           next unless project_type_filter.include? 'android'
@@ -111,19 +111,11 @@ class Analyzer
           sign_android = project[:configs][project_configuration][:sign_android]
 
           build_commands << [
-              MDTOOL_PATH,
-              'build',
-              "\"-c:#{project_configuration}\"",
-              @solution[:path],
-              "-p:#{project[:name]}"
-          ].join(' ')
-
-          build_commands << [
               'xbuild',
               sign_android ? '/t:SignAndroidPackage' : '/t:PackageForAndroid',
-              "/p:Configuration=#{project_configuration.split('|').first}",
-              "/p:Platform=#{project_configuration.split('|').last}",
-              project[:path]
+              "/p:Configuration=\"#{project_configuration.split('|').first}\"",
+              "/p:Platform=\"#{project_configuration.split('|').last}\"",
+              "\"#{project[:path]}\""
           ].join(' ')
         else
           next
@@ -151,7 +143,8 @@ class Analyzer
           MDTOOL_PATH,
           'build',
           "\"-c:#{project_configuration}\"",
-          @solution[:path],
+          "\"#{@solution[:path]}\"",
+          "\"-p:#{project[:name]}\""
       ].join(' ')
     end
 
@@ -201,6 +194,8 @@ class Analyzer
 
           project[:uitest_projects].each do |test_project_id|
             test_project = project_with_id(test_project_id)
+            next unless test_project
+
             test_project_configuration = test_project[:mappings][configuration]
 
             next unless test_project_configuration
@@ -240,6 +235,8 @@ class Analyzer
 
           project[:uitest_projects].each do |test_project_id|
             test_project = project_with_id(test_project_id)
+            next unless test_project
+
             test_project_configuration = test_project[:mappings][configuration]
 
             next unless test_project_configuration
@@ -315,7 +312,9 @@ class Analyzer
       if parse_solution_configs
         match = line.match(REGEX_SOLUTION_GLOBAL_SOLUTION_CONFIG)
         if match != nil && match.captures != nil && match.captures.count == 2
-          (@solution[:configs] ||= []) << "#{match.captures[0]}|#{match.captures[1].delete(' ')}"
+          configuration =  match.captures[0].strip
+          platform = match.captures[1].strip
+          (@solution[:configs] ||= []) << "#{configuration}|#{platform}"
         end
       end
 
@@ -330,9 +329,16 @@ class Analyzer
         match = line.match(REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG)
         if match != nil && match.captures != nil && match.captures.count == 5
           project_id = match.captures[0]
+          solution_configuration = match.captures[1].strip
+          solution_platform = match.captures[2].strip
+          project_configuration = match.captures[3].strip
+          project_platform = match.captures[4].strip
+          project_platform = "AnyCPU" if project_platform.eql? 'Any CPU' # Fix MS bug
 
           project = project_with_id(project_id)
-          (project[:mappings] ||= {})["#{match.captures[1]}|#{match.captures[2].delete(' ')}"] = "#{match.captures[3]}|#{match.captures[4].strip.delete(' ')}"
+          next unless project
+
+          (project[:mappings] ||= {})["#{solution_configuration}|#{solution_platform}"] = "#{project_configuration}|#{project_platform}"
         end
       end
 
@@ -406,7 +412,9 @@ class Analyzer
 
       match = line.match(REGEX_PROJECT_PROPERTY_GROUP_WITH_CONDITION)
       if match != nil && match.captures != nil && match.captures.count == 2
-        project_config = "#{match.captures[0]}|#{match.captures[1].delete(' ')}"
+        configuration = match.captures[0].strip
+        platform = match.captures[1].strip
+        project_config = "#{configuration}|#{platform}"
 
         (project[:configs] ||= {})[project_config] = {}
       end
@@ -455,6 +463,7 @@ class Analyzer
     @solution[:projects].each do |project|
       return project if project[:id].casecmp(id) == 0
     end
+    return nil
   end
 
   def export_artifact(assembly_name, output_path, extension)

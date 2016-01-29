@@ -103,8 +103,8 @@ begin
   builder.build_solution
   builder.build
   builder.build_test
-rescue
-  fail_with_message('Build failed')
+rescue => ex
+  fail_with_message("Build failed: #{ex}")
 end
 
 output = builder.generated_files

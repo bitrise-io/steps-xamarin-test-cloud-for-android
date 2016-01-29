@@ -31,7 +31,7 @@ inputs:
         Xamarin project configuration
       is_required: true
       is_expand: true
-  - xamarin_platform: AnyCPU
+  - xamarin_platform: Any CPU
     opts:
       title: Xamarin platform
       description: |

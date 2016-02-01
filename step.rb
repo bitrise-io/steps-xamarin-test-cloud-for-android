@@ -100,7 +100,6 @@ fail_with_message('series not specified') unless options[:series]
 
 builder = Builder.new(options[:project], options[:configuration], options[:platform], nil)
 begin
-  builder.build_solution
   builder.build
   builder.build_test
 rescue => ex

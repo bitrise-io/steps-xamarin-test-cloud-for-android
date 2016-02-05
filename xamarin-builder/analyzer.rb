@@ -27,7 +27,7 @@ REGEX_PROJECT_ASSEMBLY_NAME = /<AssemblyName>(?<assembly_name>.*)<\/AssemblyName
 REGEX_PROJECT_ANDROID_MANIFEST = /<AndroidManifest>(?<manifest_path>.*)<\/AndroidManifest>/i
 REGEX_PROJECT_ANDROID_PACKAGE_NAME = /<manifest.*package=\"(?<package_name>.*)\">/i
 REGEX_PROJECT_MTOUCH_ARCH = /<MtouchArch>(?<arch>.*)<\/MtouchArch>/i
-REGEX_PROJECT_PROPERTY_GROUP_WITH_CONDITION = /<PropertyGroup Condition=\" '\$\(Configuration\)\|\$\(Platform\)' == '(?<config>.*)\|(?<platform>.*)' \">/i
+REGEX_PROJECT_PROPERTY_GROUP_WITH_CONDITION = /<PropertyGroup Condition=\"\s*'\$\(Configuration\)\|\$\(Platform\)'\s*==\s*'(?<config>.*)\|(?<platform>.*)'\s*\">/i
 REGEX_PROJECT_PROPERTY_GROUP_END = /<\/PropertyGroup>/i
 REGEX_PROJECT_OUTPUT_PATH = /<OutputPath>(?<output_path>.*)<\/OutputPath>/i
 REGEX_PROJECT_IPA_PACKAGE = /<IpaPackageName>/i
@@ -49,9 +49,16 @@ class Analyzer
     @path = path
 
     case type
-      when SOLUTION
-        analyze_solution(@path)
-      when PROJECT
+    when SOLUTION
+      analyze_solution(@path)
+    when PROJECT
+      puts
+      puts "\e[32mYou are trying to build a project file at path #{@path}\e[0m"
+      puts "You should specify the solution path and set the type of the project you would like to build: [iOS|Android]"
+      puts
+      raise "Unsupported type detected"
+    else
+      raise "Unsupported type detected"
     end
 
     @solution[:projects].each do |project|
@@ -65,11 +72,11 @@ class Analyzer
     puts @solution
   end
 
-  def build_solution_command(config)
+  def build_solution_command(config, platform)
     [
         MDTOOL_PATH,
         'build',
-        "\"-c:#{config}\"",
+        "\"-c:#{config}|#{platform}\"",
         @solution[:path]
     ].join(' ')
   end
@@ -110,8 +117,10 @@ class Analyzer
               sign_android ? '/t:SignAndroidPackage' : '/t:PackageForAndroid',
               "/p:Configuration=\"#{project_configuration.split('|').first}\""
           ]
-          build_command << project_configuration.split('|').last unless project_configuration.split('|').last.eql?("AnyCPU")
+          build_command << "/p:Platform=\"#{project_configuration.split('|').last}\"" unless project_configuration.split('|').last.eql?("AnyCPU")
           build_command << "\"#{project[:path]}\""
+          build_command << "/verbosity:minimal"
+          build_command << "/nologo"
 
           build_commands << build_command.join(' ')
         else
@@ -411,7 +420,7 @@ class Analyzer
     end
 
     # Joint uitest project to projects
-    if project[:api].eql? 'uitest'
+    if project[:api].eql?('uitest') && !project[:referred_project_ids].nil?
       project[:referred_project_ids].each do |project_id|
         referred_project = project_with_id(project_id)
         next unless referred_project

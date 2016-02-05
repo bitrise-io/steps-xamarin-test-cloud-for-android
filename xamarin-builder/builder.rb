@@ -19,7 +19,6 @@ class Builder
     analyzer.analyze(@path)
 
     build_commands = analyzer.build_commands(@configuration, @platform, @project_type_filter)
-    puts build_commands
 
     raise 'No project found to build' if build_commands.empty?
     build_commands.each do |build_command|
@@ -35,7 +34,7 @@ class Builder
     analyzer = Analyzer.new
     analyzer.analyze(@path)
 
-    build_command = analyzer.build_solution_command(@configuration)
+    build_command = analyzer.build_solution_command(@configuration, @platform)
 
     puts
     puts "\e[34m#{build_command}\e[0m"

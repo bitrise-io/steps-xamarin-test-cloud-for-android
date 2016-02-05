@@ -98,7 +98,7 @@ fail_with_message('series not specified') unless options[:series]
 #
 # Main
 
-builder = Builder.new(options[:project], options[:configuration], options[:platform], nil)
+builder = Builder.new(options[:project], options[:configuration], options[:platform], "android")
 begin
   builder.build
   builder.build_test
@@ -108,10 +108,6 @@ end
 
 output = builder.generated_files
 
-puts
-puts "Generated outputs: #{output}"
-puts
-
 apk_path = nil
 assembly_dir = nil
 
@@ -119,54 +115,48 @@ output.each do |_, project_output|
   if project_output[:apk] && project_output[:uitests] && project_output[:uitests].length > 0
     apk_path = project_output[:apk]
 
-    dll_path = project_output[:uitests][0]
-    assembly_dir = File.dirname(dll_path)
+    project_output[:uitests].each do |dll_path|
+      assembly_dir = File.dirname(dll_path)
+
+      puts ""
+      puts "\e[34mUploading #{apk_path} with #{dll_path}"
+      #
+      # Get test cloud path
+      test_cloud = Dir[File.join(@work_dir, '/**/packages/Xamarin.UITest.*/tools/test-cloud.exe')].last
+      fail_with_message("\e[31mCan't find test-cloud.exe\e[0m") unless test_cloud
+
+      #
+      # Build Request
+      request = ["mono", "\"#{test_cloud}\"", "submit", "\"#{apk_path}\"",  options[:api_key]]
+      request << options[:sign_parameters] if options[:sign_parameters]
+      request << " --user #{options[:user]}"
+      request << "--assembly-dir \"#{assembly_dir}\""
+      request << "--devices #{options[:devices]}"
+      request << '--async' if options[:async]
+      request << "--series #{options[:series]}" if options[:series]
+      request << "--nunit-xml #{@result_log_path}"
+      request << '--fixture-chunk' if options[:parallelization] == 'by_test_fixture'
+      request << '--test-chunk' if options[:parallelization] == 'by_test_chunk'
+      request << options[:other_parameters]
+
+      puts "  #{request.join(' ')}"
+      system(request.join(' '))
+
+      unless $?.success?
+        file = File.open(@result_log_path)
+        contents = file.read
+        file.close
+
+        puts contents
+        fail_with_message("\e[31mFailed to upload to Xamarin Test Cloud\e[0m")
+      end
+
+      #
+      # Set output envs
+      system('envman add --key BITRISE_XAMARIN_TEST_RESULT --value succeeded')
+      system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value #{@result_log_path}") if @result_log_path
+
+      puts "  \e[32mLogs are available at path:\e[0m #{@result_log_path}"
+    end
   end
 end
-
-
-#
-# Get test cloud path
-test_cloud = Dir[File.join(@work_dir, '/**/packages/Xamarin.UITest.*/tools/test-cloud.exe')].last
-fail_with_message('No test-cloud.exe found') unless test_cloud
-puts "  (i) test_cloud path: #{test_cloud}"
-
-#
-# Build Request
-request = "mono #{test_cloud} submit \"#{apk_path}\" #{options[:api_key]}"
-request += " #{options[:sign_parameters]}" if options[:sign_parameters]
-request += " --user #{options[:user]}"
-request += " --assembly-dir #{assembly_dir}"
-request += " --devices #{options[:devices]}"
-request += ' --async' if options[:async]
-request += " --series #{options[:series]}" if options[:series]
-request += " --nunit-xml #{@result_log_path}"
-request += ' --fixture-chunk' if options[:parallelization] == 'by_test_fixture'
-request += ' --test-chunk' if options[:parallelization] == 'by_test_chunk'
-request += " #{options[:other_parameters]}"
-
-puts
-puts "request: #{request}"
-system(request)
-
-unless $?.success?
-  file = File.open(@result_log_path)
-  contents = file.read
-  file.close
-
-  puts
-  puts "result: #{contents}"
-  puts
-
-  fail_with_message("#{request} -- failed")
-end
-
-#
-# Set output envs
-puts
-puts '(i) The result is: succeeded'
-system('envman add --key BITRISE_XAMARIN_TEST_RESULT --value succeeded')
-
-puts
-puts "(i) The test log is available at: #{@result_log_path}"
-system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value #{@result_log_path}") if @result_log_path

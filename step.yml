@@ -1,7 +1,7 @@
-title: "Submit apk to Xamarin Test Cloud"
-summary: "Submit apk to Xamarin Test Cloud"
+title: "Xamarin Test Cloud for Android"
+summary: "Xamarin Test Cloud for Android"
 description: |-
-  Submit apk to Xamarin Test Cloud.
+  Upload your Android test suite to Xamarin Test Cloud and run it on thousands of real devices.
 website: https://github.com/bitrise-steplib/steps-xamarin-test-cloud-for-android
 source_code_url: https://github.com/bitrise-steplib/steps-xamarin-test-cloud-for-android
 support_url: https://github.com/bitrise-steplib/steps-xamarin-test-cloud-for-android/issues

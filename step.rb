@@ -103,7 +103,7 @@ begin
   builder.build
   builder.build_test
 rescue => ex
-  fail_with_message("Build failed: #{ex}")
+  fail_with_message("Build failed: #{ex} | Backtrace: #{ex.backtrace}")
 end
 
 output = builder.generated_files

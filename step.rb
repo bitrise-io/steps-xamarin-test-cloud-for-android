@@ -119,7 +119,7 @@ output.each do |_, project_output|
       assembly_dir = File.dirname(dll_path)
 
       puts ""
-      puts "\e[34mUploading #{apk_path} with #{dll_path}"
+      puts "\e[34mUploading #{apk_path} with #{dll_path}\e[0m"
       #
       # Get test cloud path
       test_cloud = Dir[File.join(@work_dir, '/**/packages/Xamarin.UITest.*/tools/test-cloud.exe')].last
@@ -142,19 +142,22 @@ output.each do |_, project_output|
       puts "  #{request.join(' ')}"
       system(request.join(' '))
 
-      unless $?.success?
+      result_log = ''
+      if File.exist? @result_log_path
         file = File.open(@result_log_path)
-        contents = file.read
+        result_log = file.read
         file.close
+      end
 
-        puts contents
+      unless $?.success?
+        puts result_log
         fail_with_message("\e[31mFailed to upload to Xamarin Test Cloud\e[0m")
       end
 
       #
       # Set output envs
       system('envman add --key BITRISE_XAMARIN_TEST_RESULT --value succeeded')
-      system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value #{@result_log_path}") if @result_log_path
+      system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value #{result_log}") if result_log
 
       puts "  \e[32mLogs are available at path:\e[0m #{@result_log_path}"
     end

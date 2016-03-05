@@ -157,7 +157,7 @@ output.each do |_, project_output|
       #
       # Set output envs
       system('envman add --key BITRISE_XAMARIN_TEST_RESULT --value succeeded')
-      system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value #{result_log}") if result_log
+      system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value #{result_log}") if result_log.to_s != ""
 
       puts "  \e[32mLogs are available at path:\e[0m #{@result_log_path}"
     end

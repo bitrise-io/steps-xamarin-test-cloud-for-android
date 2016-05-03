@@ -3,17 +3,10 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - XAMARIN_PROJECT: $XAMARIN_PROJECT
-  - BITRISE_XAMARIN_CONFIGURATION: $BITRISE_XAMARIN_CONFIGURATION
-  - BITRISE_XAMARIN_PLATFORM: $BITRISE_XAMARIN_PLATFORM
-  - API_KEY: $API_KEY
+  - BITRISE_PROJECT_PATH: $BITRISE_PROJECT_PATH
   - USER: $USER
+  - API_KEY: $API_KEY
   - DEVICES: $DEVICES
-  - ASYNC: $ASYNC
-  - SERIES: $SERIES
-  - PARALLELIZATION: $PARALLELIZATION
-  - SIGN_PARAMETERS: $SIGN_PARAMETERS
-  - OTHER_PARAMETERS: $OTHER_PARAMETERS
 
 workflows:
   test:
@@ -26,18 +19,9 @@ workflows:
     - path::./:
         title: Step Test
         inputs:
-        - xamarin_project: $XAMARIN_PROJECT
-        - xamarin_configuration: $BITRISE_XAMARIN_CONFIGURATION
-        - xamarin_platform: $BITRISE_XAMARIN_PLATFORM
-        - is_clean_build: yes
         - xamarin_user: $USER
         - test_cloud_api_key: $API_KEY
         - test_cloud_devices: $DEVICES
-        - test_cloud_is_async: $ASYNC
-        - test_cloud_series: $SERIES
-        - test_cloud_parallelization: $PARALLELIZATION
-        - sign_parameters: $SIGN_PARAMETERS
-        - other_parameters: $OTHER_PARAMETERS
     - script:
         title: Output test
         inputs:

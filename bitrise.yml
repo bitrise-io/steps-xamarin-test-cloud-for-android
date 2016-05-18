@@ -9,6 +9,8 @@ app:
   - DEVICES: $DEVICES
 
 workflows:
+  # ----------------------------------------------------------------
+  # --- workflow to Step Test
   test:
     steps:
     - change-workdir:
@@ -30,7 +32,35 @@ workflows:
             echo "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT: $BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT"
 
   # ----------------------------------------------------------------
-  # --- workflows to Share this step into a Step Library
+  # --- workflows to create Release
+  create-release:
+    steps:
+    - script:
+        title:
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -e
+
+            export CI=true
+            releaseman create --bump-version patch
+
+  create-release-version:
+    envs:
+    - RELEASE_VERSION: 1.7.2
+    steps:
+    - script:
+        title:
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -e
+
+            export CI=true
+            releaseman create --version $RELEASE_VERSION
+
+  # ----------------------------------------------------------------
+  # --- workflow to Share this step into a Step Library
   share-this-step:
     envs:
       # if you want to share this step into a StepLib

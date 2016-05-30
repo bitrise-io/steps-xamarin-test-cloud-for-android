@@ -30,6 +30,7 @@ workflows:
         - content: |-
             echo "BITRISE_XAMARIN_TEST_RESULT: $BITRISE_XAMARIN_TEST_RESULT"
             echo "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT: $BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT"
+            echo "BITRISE_XAMARIN_TEST_TO_RUN_ID: $BITRISE_XAMARIN_TEST_TO_RUN_ID"
 
   # ----------------------------------------------------------------
   # --- workflows to create Release

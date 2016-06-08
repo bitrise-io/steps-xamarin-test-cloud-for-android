@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.1.1)
+## Changelog (Current version: 1.2.0)
 
 -----------------
+
+### 1.2.0 (2016 Jun 08)
+
+* [21233a3] prepare for 1.2.0
+* [040d199] Merge pull request #14 from bitrise-steplib/test_id
+* [7564c5f] export test run id
 
 ### 1.1.1 (2016 May 25)
 
@@ -38,4 +44,4 @@
 
 -----------------
 
-Updated: 2016 May 25
+Updated: 2016 Jun 08

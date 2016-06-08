@@ -1,5 +1,6 @@
 require 'optparse'
-require 'pathname'
+require 'open3'
+require 'json'
 
 require_relative 'xamarin-builder/builder'
 
@@ -13,21 +14,32 @@ require_relative 'xamarin-builder/builder'
 # --- Functions
 # -----------------------
 
-def fail_with_message(message)
+def log_info(message)
+  puts
+  puts "\e[34m#{message}\e[0m"
+end
+
+def log_details(message)
+  puts "  #{message}"
+end
+
+def log_done(message)
+  puts "  \e[32m#{message}\e[0m"
+end
+
+def log_warning(message)
+  puts "\e[33m#{message}\e[0m"
+end
+
+def log_error(message)
+  puts "\e[31m#{message}\e[0m"
+end
+
+def log_fail(message)
   system('envman add --key BITRISE_XAMARIN_TEST_RESULT --value failed')
 
   puts "\e[31m#{message}\e[0m"
   exit(1)
-end
-
-def error_with_message(message)
-  puts "\e[31m#{message}\e[0m"
-end
-
-def to_bool(value)
-  return true if value == true || value =~ (/^(true|t|yes|y|1)$/i)
-  return false if value == false || value.nil? || value == '' || value =~ (/^(false|f|no|n|0)$/i)
-  fail_with_message("Invalid value for Boolean: \"#{value}\"")
 end
 
 # -----------------------
@@ -43,7 +55,7 @@ options = {
   api_key: nil,
   user: nil,
   devices: nil,
-  async: true,
+  async: 'yes',
   series: 'master',
   parallelization: nil,
   sign_parameters: nil,
@@ -58,7 +70,7 @@ parser = OptionParser.new do |opts|
   opts.on('-a', '--api key', 'Api key') { |a| options[:api_key] = a unless a.to_s == '' }
   opts.on('-u', '--user user', 'User') { |u| options[:user] = u unless u.to_s == '' }
   opts.on('-d', '--devices devices', 'Devices') { |d| options[:devices] = d unless d.to_s == '' }
-  opts.on('-y', '--async async', 'Async') { |y| options[:async] = false unless to_bool(y) }
+  opts.on('-y', '--async async', 'Async') { |y| options[:async] = y unless y.to_s == '' }
   opts.on('-r', '--series series', 'Series') { |r| options[:series] = r unless r.to_s == '' }
   opts.on('-l', '--parallelization parallelization', 'Parallelization') { |l| options[:parallelization] = l unless l.to_s == '' }
   opts.on('-g', '--sign parameters', 'Sign') { |g| options[:sign_parameters] = g unless g.to_s == '' }
@@ -71,29 +83,28 @@ parser.parse!
 
 #
 # Print options
-puts
-puts '========== Configs =========='
-puts " * project: #{options[:project]}"
-puts " * configuration: #{options[:configuration]}"
-puts " * platform: #{options[:platform]}"
-puts ' * api_key: ***'
-puts " * user: #{options[:user]}"
-puts " * devices: #{options[:devices]}"
-puts " * async: #{options[:async]}"
-puts " * series: #{options[:series]}"
-puts " * parallelization: #{options[:parallelization]}"
-puts ' * sign_parameters: ***'
-puts " * other_parameters: #{options[:other_parameters]}"
+log_info 'Configs:'
+log_details("* project: #{options[:project]}")
+log_details("* configuration: #{options[:configuration]}")
+log_details("* platform: #{options[:platform]}")
+log_details('* api_key: ***')
+log_details("* user: #{options[:user]}")
+log_details("* devices: #{options[:devices]}")
+log_details("* async: #{options[:async]}")
+log_details("* series: #{options[:series]}")
+log_details("* parallelization: #{options[:parallelization]}")
+log_details('* sign_parameters: ***')
+log_details("* other_parameters: #{options[:other_parameters]}")
 
 #
 # Validate options
-fail_with_message('No project file found') unless options[:project] && File.exist?(options[:project])
-fail_with_message('configuration not specified') unless options[:configuration]
-fail_with_message('platform not specified') unless options[:platform]
-fail_with_message('api_key not specified') unless options[:api_key]
-fail_with_message('user not specified') unless options[:user]
-fail_with_message('devices not specified') unless options[:devices]
-fail_with_message('series not specified') unless options[:series]
+log_fail('No project file found') unless options[:project] && File.exist?(options[:project])
+log_fail('configuration not specified') unless options[:configuration]
+log_fail('platform not specified') unless options[:platform]
+log_fail('api_key not specified') unless options[:api_key]
+log_fail('user not specified') unless options[:user]
+log_fail('devices not specified') unless options[:devices]
+log_fail('series not specified') unless options[:series]
 
 #
 # Main
@@ -103,14 +114,13 @@ begin
   builder.build
   builder.build_test
 rescue => ex
-  error_with_message(ex.inspect.to_s)
-  error_with_message('--- Stack trace: ---')
-  error_with_message(ex.backtrace.to_s)
-  exit(1)
+  log_error(ex.inspect.to_s)
+  log_error('--- Stack trace: ---')
+  log_fail(ex.backtrace.to_s)
 end
 
 output = builder.generated_files
-fail_with_message 'No output generated' if output.nil? || output.empty?
+log_fail 'No output generated' if output.nil? || output.empty?
 
 any_uitest_built = false
 
@@ -118,62 +128,113 @@ output.each do |_, project_output|
   next if project_output[:apk].nil? || project_output[:uitests].nil? || project_output[:uitests].empty?
 
   apk_path = project_output[:apk]
+  log_fail('no generated apk found') unless apk_path
 
   project_output[:uitests].each do |dll_path|
     any_uitest_built = true
 
     assembly_dir = File.dirname(dll_path)
 
-    puts
-    puts "\e[34mUploading #{apk_path} with #{dll_path}\e[0m"
+    log_info("Uploading #{apk_path} with #{dll_path}")
 
     #
     # Get test cloud path
     test_cloud = Dir[File.join(@work_dir, '/**/packages/Xamarin.UITest.*/tools/test-cloud.exe')].last
-    fail_with_message("\e[31mCan't find test-cloud.exe\e[0m") unless test_cloud
+    log_fail("Can't find test-cloud.exe") unless test_cloud
 
     #
     # Build Request
-    request = ["mono", "\"#{test_cloud}\"", "submit", "\"#{apk_path}\"",  options[:api_key]]
+    request = ['mono', "\"#{test_cloud}\"", 'submit', "\"#{apk_path}\"", options[:api_key]]
     request << options[:sign_parameters] if options[:sign_parameters]
     request << "--user #{options[:user]}"
     request << "--assembly-dir \"#{assembly_dir}\""
     request << "--devices #{options[:devices]}"
-    request << '--async' if options[:async]
+    request << '--async-json' if options[:async] == 'yes'
     request << "--series #{options[:series]}" if options[:series]
     request << "--nunit-xml #{@result_log_path}"
     request << '--fixture-chunk' if options[:parallelization] == 'by_test_fixture'
     request << '--test-chunk' if options[:parallelization] == 'by_test_chunk'
     request << options[:other_parameters]
 
-    puts "  #{request.join(' ')}"
-    system(request.join(' '))
-    request_result = $?
+    log_details(request.join(' '))
+    puts
 
+    #
+    # Run Test Cloud Upload
+    captured_stdout_err_lines = []
+    success = Open3.popen2e(request.join(' ')) do |stdin, stdout_err, wait_thr|
+      stdin.close
+
+      while line = stdout_err.gets
+        puts line
+        captured_stdout_err_lines << line
+      end
+
+      wait_thr.value.success?
+    end
+
+    puts
+
+    #
+    # Process output
     result_log = ''
     if File.exist? @result_log_path
       file = File.open(@result_log_path)
       result_log = file.read
       file.close
+
+      system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value \"#{result_log}\"") if result_log.to_s != ''
+      log_details "Logs are available at path: #{@result_log_path}"
+      puts
     end
 
-    unless request_result.success?
+    unless success
       puts
       puts result_log
-      fail_with_message('Xamarin Test Cloud failed')
+      puts
+
+      log_fail('Xamarin Test Cloud failed')
     end
 
     #
     # Set output envs
-    system('envman add --key BITRISE_XAMARIN_TEST_RESULT --value succeeded')
-    system("envman add --key BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT --value \"#{result_log}\"") unless result_log.to_s.strip.length == 0
+    if options[:async] == 'yes'
+      captured_stdout_err = captured_stdout_err_lines.join('')
 
-    puts "  \e[32mXamarin Test Cloud deploy succeeded\e[0m"
-    puts "  Logs are available at path: #{@result_log_path}"
+      test_run_id_regexp = /"TestRunId":"(?<id>.*)",/
+      test_run_id = ''
+
+      match = captured_stdout_err.match(test_run_id_regexp)
+      if match
+        captures = match.captures
+        test_run_id = captures[0] if captures && captures.length == 1
+
+        if test_run_id.to_s != ''
+          system("envman add --key BITRISE_XAMARIN_TEST_TO_RUN_ID --value \"#{test_run_id}\"")
+          log_details "Found Test Run ID: #{test_run_id}"
+        end
+      end
+
+      error_messages_regexp = /"ErrorMessages":\[(?<error>.*)\],/
+      error_messages = ''
+
+      match = captured_stdout_err.match(error_messages_regexp)
+      if match
+        captures = match.captures
+        error_messages = captures[0] if captures && captures.length == 1
+
+        if error_messages.to_s != ''
+          log_fail("Xamarin Test Cloud submit failed, with error(s): #{error_messages}")
+        end
+      end
+    end
+
+    system('envman add --key BITRISE_XAMARIN_TEST_RESULT --value succeeded')
+    log_done('Xamarin Test Cloud submit succeeded')
   end
 end
 
 unless any_uitest_built
   puts "generated_files: #{output}"
-  fail_with_message 'No APK or built UITest found in outputs'
+  log_fail 'No APK or built UITest found in outputs'
 end

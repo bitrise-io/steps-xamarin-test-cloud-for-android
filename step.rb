@@ -108,9 +108,8 @@ log_fail('series not specified') unless options[:series]
 
 #
 # Main
-
-builder = Builder.new(options[:project], options[:configuration], options[:platform], "android")
 begin
+  builder = Builder.new(options[:project], options[:configuration], options[:platform], [Api::ANDROID])
   builder.build
   builder.build_test
 rescue => ex

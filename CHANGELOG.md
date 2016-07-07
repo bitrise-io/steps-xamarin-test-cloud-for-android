@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.2.0)
+## Changelog (Current version: 1.2.1)
 
 -----------------
+
+### 1.2.1 (2016 Jul 07)
+
+* [a4a74bb] prepare for 1.2.1
+* [3e287c7] Merge pull request #15 from bitrise-steplib/builder_update
+* [51d3e38] builder update
 
 ### 1.2.0 (2016 Jun 08)
 
@@ -44,4 +50,4 @@
 
 -----------------
 
-Updated: 2016 Jun 08
+Updated: 2016 Jul 07

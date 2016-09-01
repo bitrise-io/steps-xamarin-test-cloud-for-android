@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.2.1)
+## Changelog (Current version: 1.2.2)
 
 -----------------
+
+### 1.2.2 (2016 Sep 01)
+
+* [e840bf8] prepare for 1.2.2
+* [5a21537] Merge pull request #17 from bitrise-steplib/feature/yml-description-formatting-fixes
+* [8f3e635] step yml formatting fixes
 
 ### 1.2.1 (2016 Jul 07)
 
@@ -50,4 +56,4 @@
 
 -----------------
 
-Updated: 2016 Jul 07
+Updated: 2016 Sep 01

@@ -63,7 +63,7 @@ inputs:
       description: |
         Don't wait for cloud test run to complete.
 
-        Adds '--async-json' flag to Xamarin Test Cloud upload command.
+        Adds `--async-json` flag to Xamarin Test Cloud upload command.
       value_options:
       - "yes"
       - "no"
@@ -91,13 +91,15 @@ inputs:
         Signing parameters to pass Xamarin Test Cloud.
 
         Required parameters:
+        
         - PATH-TO-KEYSTORE
         - KEYSTORE-PASSWORD
         - KEYALIAS
         - KEYALIAS-PASSWORD
 
         Example:
-        'keystore <PATH-TO-KEYSTORE> <KEYSTORE-PASSWORD> <KEYALIAS> <KEYALIAS-PASSWORD>'
+        
+        `keystore <PATH-TO-KEYSTORE> <KEYSTORE-PASSWORD> <KEYALIAS> <KEYALIAS-PASSWORD>`
   - other_parameters:
     opts:
       title: "Other parameters"
@@ -106,14 +108,18 @@ inputs:
         Other parameters to pass Xamarin Test Cloud.
 
         Available parameters:
-        - --app-name APP-NAME
-        - --category NUNIT-CATEGORY
-        - --fixture NUNIT-FIXTURE
-        - --sign-info SIGN-INFO-SI-PATH
+
+        - `--app-name APP-NAME`
+        - `--category NUNIT-CATEGORY`
+        - `--fixture NUNIT-FIXTURE`
+        - `--sign-info SIGN-INFO-SI-PATH`
 
         Example:
-        '--app-name <APP-NAME> --category <NUNIT-CATEGORY> --sign-info <SIGN-INFO-SI-PATH>
-        '--app-name <APP-NAME> --fixture <NUNIT-FIXTURE> --sign-info <SIGN-INFO-SI-PATH>
+        
+        ```
+        --app-name <APP-NAME> --category <NUNIT-CATEGORY> --sign-info <SIGN-INFO-SI-PATH>
+        --app-name <APP-NAME> --fixture <NUNIT-FIXTURE> --sign-info <SIGN-INFO-SI-PATH>
+        ```
 outputs:
   - BITRISE_XAMARIN_TEST_RESULT:
     opts:
@@ -129,6 +135,4 @@ outputs:
     opts:
       title: Test to run ID.
       description: |
-        Test to run ID.
-
-        This output is available only if 'test_cloud_is_async' is set to 'yes'.
+        Test to run ID. This output is available only if `test_cloud_is_async` is set to 'yes'.

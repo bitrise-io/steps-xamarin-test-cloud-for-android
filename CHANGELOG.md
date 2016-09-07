@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.2.2)
+## Changelog (Current version: 1.2.3)
 
 -----------------
+
+### 1.2.3 (2016 Sep 07)
+
+* [b5e2cd8] prepare for 1.2.3
+* [371087c] xamarin-builder update to 0.9.4 (#18)
 
 ### 1.2.2 (2016 Sep 01)
 
@@ -56,4 +61,4 @@
 
 -----------------
 
-Updated: 2016 Sep 01
+Updated: 2016 Sep 07

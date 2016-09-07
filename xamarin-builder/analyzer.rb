@@ -259,6 +259,54 @@ class Analyzer
     [build_commands, errors]
   end
 
+  def nunit_light_test_commands(config, platform, touch_unit_server, logfile)
+    configuration = "#{config}|#{platform}"
+    build_commands = []
+    errors = []
+
+    raise "Touch.Server.exe not found at path: #{touch_unit_server}" unless File.exists?(touch_unit_server)
+
+    @solution[:projects].each do |project|
+      next if project[:tests].nil? || !project[:tests].include?(Tests::NUNIT_LITE)
+
+      test_project = project[:name]
+
+      unless project[:mappings]
+        errors << "#{test_project} not found in solution mappings"
+        errors << project.to_s
+        next
+      end
+
+      project_configuration = project[:mappings][configuration]
+      unless project_configuration
+        errors << "no mapping found for #{test_project} with #{configuration}"
+        errors << project.to_s
+        next
+      end
+
+      project_config = project_configuration.split('|').first
+      unless project_config
+        errors << "#{test_project} configuration #{project_configuration} is invalid"
+        errors << project.to_s
+        next
+      end
+
+      build_commands << mdtool_build_command('build', project_configuration, @solution[:path], project[:name])
+
+      command = [
+          "mono --debug",
+          "\"#{touch_unit_server}\"",
+          "--launchsim",
+          "-autoexit",
+          "-logfile=#{logfile}"
+      ]
+
+      build_commands << command
+    end
+
+    [build_commands, errors]
+  end
+
   def nunit_test_commands(config, platform, options)
     configuration = "#{config}|#{platform}"
     build_commands = []
@@ -365,9 +413,22 @@ class Analyzer
         full_output_dir = File.join(project_dir, rel_output_dir)
 
         package_name = project[:android_manifest_path].nil? ? '*' : android_package_name(project[:android_manifest_path])
+        sign_android = project[:configs][project_configuration][:sign_android]
 
         full_output_path = nil
-        full_output_path = export_artifact(package_name, full_output_dir, '.apk') if package_name
+
+        if sign_android
+          pattern = File.join(full_output_dir, "#{package_name}*signed.apk")
+          artifact_path = Dir.glob(pattern, File::FNM_CASEFOLD).first if package_name
+          full_output_path = artifact_path if !artifact_path.nil? && File.exist?(artifact_path)
+
+          pattern = File.join(full_output_dir, '*signed.apk')
+          artifact_path = Dir.glob(pattern, File::FNM_CASEFOLD).first
+          full_output_path = artifact_path if full_output_path.nil? && !artifact_path.nil? && File.exist?(artifact_path)
+        elsif package_name
+          full_output_path = export_artifact(package_name, full_output_dir, '.apk')
+        end
+ 
         full_output_path = export_artifact('*', full_output_dir, '.apk') unless full_output_path
 
         outputs_hash[project[:id]] = {}
@@ -512,7 +573,7 @@ class Analyzer
           solution_platform = match.captures[2].strip
           project_configuration = match.captures[3].strip
           project_platform = match.captures[4].strip
-          project_platform = "AnyCPU" if project_platform.eql? 'Any CPU' # Fix MS bug
+          project_platform = 'AnyCPU' if project_platform.eql? 'Any CPU' # Fix MS bug
 
           project = project_with_id(project_id)
           next unless project
@@ -525,6 +586,20 @@ class Analyzer
       match = line.match(REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG_START)
       parse_project_configs = true if match != nil
     end
+
+    # Remove projects without any mapping or config
+    valid_projects = []
+    @solution[:projects].each do |project|
+      has_mapping = (project[:mappings] && project[:mappings].length)
+      has_config = (project[:configs] && project[:configs].length)
+
+      puts "project #{project} is referred in solution, but does not contains any mapping" unless has_mapping
+      puts "project #{project} is referred in solution, but does not contains any config" unless has_config
+
+      valid_projects << project if has_mapping && has_config
+    end
+
+    @solution[:projects] = valid_projects
   end
 
   def analyze_project(project)
@@ -690,6 +765,9 @@ class Analyzer
 
       match = line.match(REGEX_PROJECT_REFERENCE_NUNIT_FRAMEWORK)
       (project[:tests] ||= []) << Tests::NUNIT if match != nil
+
+      match = line.match(REGEX_PROJECT_REFERENCE_NUNIT_LITE_FRAMEWORK)
+      (project[:tests] ||= []) << Tests::NUNIT_LITE if match != nil
 
       # Referred projects
       match = line.match(REGEX_PROJECT_PROJECT_REFERENCE_END)

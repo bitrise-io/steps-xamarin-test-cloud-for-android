@@ -208,7 +208,12 @@ func main() {
 		}
 	}
 
-	testCloud := testcloud.NewModel(testClouds[0])
+	testCloud, err := testcloud.NewModel(testClouds[0])
+	if err != nil {
+		log.Error("Failed to create test cloud model, error: %s", err)
+		os.Exit(1)
+	}
+
 	testCloud.SetAPIKey(configs.APIKey)
 	testCloud.SetUser(configs.User)
 	testCloud.SetDevices(configs.Devices)

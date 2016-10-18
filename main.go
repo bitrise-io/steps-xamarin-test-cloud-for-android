@@ -30,8 +30,8 @@ type ConfigsModel struct {
 	IsAsync         string
 	Series          string
 	Parallelization string
-	SignParameters  string
-	OtherParameters string
+	SignOptions     string
+	CustomOptions   string
 
 	DeployDir string
 }
@@ -48,8 +48,8 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		IsAsync:         os.Getenv("test_cloud_is_async"),
 		Series:          os.Getenv("test_cloud_series"),
 		Parallelization: os.Getenv("test_cloud_parallelization"),
-		SignParameters:  os.Getenv("sign_parameters"),
-		OtherParameters: os.Getenv("other_parameters"),
+		SignOptions:     os.Getenv("sign_parameters"),
+		CustomOptions:   os.Getenv("other_parameters"),
 
 		DeployDir: os.Getenv("BITRISE_DEPLOY_DIR"),
 	}
@@ -70,8 +70,8 @@ func (configs ConfigsModel) print() {
 	log.Detail("- IsAsync: %s", configs.IsAsync)
 	log.Detail("- Series: %s", configs.Series)
 	log.Detail("- Parallelization: %s", configs.Parallelization)
-	log.Detail("- SignParameters: %s", configs.SignParameters)
-	log.Detail("- OtherParameters: %s", configs.OtherParameters)
+	log.Detail("- SignOptions: %s", configs.SignOptions)
+	log.Detail("- CustomOptions: %s", configs.CustomOptions)
 
 	log.Info("Other Configs:")
 
@@ -291,10 +291,10 @@ func main() {
 	// ---
 
 	// Sign Options
-	if configs.SignParameters != "" {
-		options, err := shellquote.Split(configs.SignParameters)
+	if configs.SignOptions != "" {
+		options, err := shellquote.Split(configs.SignOptions)
 		if err != nil {
-			log.Error("Failed to split params (%s), error: %s", configs.SignParameters, err)
+			log.Error("Failed to split params (%s), error: %s", configs.SignOptions, err)
 
 			if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 				log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
@@ -304,6 +304,23 @@ func main() {
 		}
 
 		testCloud.SetSignOptions(options...)
+	}
+	// ---
+
+	// Custom Options
+	if configs.CustomOptions != "" {
+		options, err := shellquote.Split(configs.CustomOptions)
+		if err != nil {
+			log.Error("Failed to split params (%s), error: %s", configs.CustomOptions, err)
+
+			if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
+				log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
+			}
+
+			os.Exit(1)
+		}
+
+		testCloud.SetCustomOptions(options...)
 	}
 	// ---
 

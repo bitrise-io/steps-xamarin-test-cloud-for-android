@@ -148,9 +148,11 @@ func main() {
 
 	if err := configs.validate(); err != nil {
 		log.Error("Issue with input: %s", err)
+
 		if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 		}
+
 		os.Exit(1)
 	}
 
@@ -162,9 +164,11 @@ func main() {
 	builder, err := builder.New(configs.XamarinSolution, []constants.ProjectType{constants.ProjectTypeAndroid}, false)
 	if err != nil {
 		log.Error("Failed to create xamarin builder, error: %s", err)
+
 		if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 		}
+
 		os.Exit(1)
 	}
 
@@ -191,18 +195,22 @@ func main() {
 	}
 	if err != nil {
 		log.Error("Build failed, error: %s", err)
+
 		if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 		}
+
 		os.Exit(1)
 	}
 
 	projectOutputMap, err := builder.CollectProjectOutputs(configs.XamarinConfiguration, configs.XamarinPlatform)
 	if err != nil {
 		log.Error("Failed to collect project outputs, error: %s", err)
+
 		if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 		}
+
 		os.Exit(1)
 	}
 
@@ -212,9 +220,11 @@ func main() {
 	}
 	if err != nil {
 		log.Error("Failed to collect test project output, error: %s", err)
+
 		if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 		}
+
 		os.Exit(1)
 	}
 	// ---
@@ -226,17 +236,21 @@ func main() {
 	testClouds, err := filepath.Glob(pattern)
 	if err != nil {
 		log.Error("Failed to find test-cloud.exe path with pattern (%s), error: %s", pattern, err)
+
 		if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 			log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 		}
+
 		os.Exit(1)
 	}
 	if len(testClouds) == 0 {
 		if err != nil {
 			log.Error("No test-cloud.exe found path with pattern (%s)", pattern)
+
 			if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 				log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 			}
+
 			os.Exit(1)
 		}
 	}
@@ -254,16 +268,21 @@ func main() {
 	testCloud.SetSeries(configs.Series)
 
 	resultLogPth := filepath.Join(configs.DeployDir, "TestResult.xml")
-	testCloud.SetNunitXMLPth(resultLogPth)
+	// If test cloud runs in asnyc mode test result will not be saved into file
+	if configs.IsAsync != "yes" {
+		testCloud.SetNunitXMLPth(resultLogPth)
+	}
 
 	// Parallelization
 	if configs.Parallelization != "none" {
 		parallelization, err := testcloud.ParseParallelization(configs.Parallelization)
 		if err != nil {
 			log.Error("Failed to parse parallelization, error: %s", err)
+
 			if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 				log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 			}
+
 			os.Exit(1)
 		}
 
@@ -276,9 +295,11 @@ func main() {
 		options, err := shellquote.Split(configs.SignParameters)
 		if err != nil {
 			log.Error("Failed to split params (%s), error: %s", configs.SignParameters, err)
+
 			if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 				log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 			}
+
 			os.Exit(1)
 		}
 
@@ -287,6 +308,8 @@ func main() {
 	// ---
 
 	// Artifacts
+	resultLog := ""
+
 	for testProjectName, testProjectOutput := range testProjectOutputMap {
 		if len(testProjectOutput.ReferredProjectNames) == 0 {
 			log.Warn("Test project (%s) does not refers to any project, skipping...", testProjectName)
@@ -330,18 +353,28 @@ func main() {
 				lines = append(lines, line)
 			}
 
-			if err := testCloud.Submit(callback); err != nil {
+			err := testCloud.Submit(callback)
+
+			// If test cloud runs in asnyc mode test result will not be saved into file
+			if configs.IsAsync != "yes" {
+				testLog, logErr := testResultLogContent(resultLogPth)
+				if logErr != nil {
+					log.Warn("Failed to read test result, error: %s", logErr)
+				}
+				resultLog = testLog
+			}
+
+			if err != nil {
 				log.Error("Submit failed, error: %s", err)
+
 				if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
 					log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 				}
 
-				resultLog, err := testResultLogContent(resultLogPth)
-				if err != nil {
-					log.Warn("Failed to read test result, error: %s", err)
-				}
-				if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", resultLog); err != nil {
-					log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", err)
+				if resultLog != "" {
+					if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", resultLog); err != nil {
+						log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", err)
+					}
 				}
 
 				os.Exit(1)
@@ -363,31 +396,30 @@ func main() {
 					var result JSONResultModel
 					if err := json.Unmarshal([]byte(jsonLine), &result); err != nil {
 						log.Error("Failed to unmarshal result, error: %s", err)
-					}
-
-					if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_TO_RUN_ID", result.TestRunID); err != nil {
-						log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_TO_RUN_ID", err)
-					}
-					log.Done("TestRunId (%s) is available in (%s) environment variable", result.TestRunID, "BITRISE_XAMARIN_TEST_TO_RUN_ID")
-
-					for _, errorMsg := range result.ErrorMessages {
-						log.Error(errorMsg)
-					}
-
-					if len(result.ErrorMessages) > 0 {
-						if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-							log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
+					} else {
+						for _, errorMsg := range result.ErrorMessages {
+							log.Error(errorMsg)
 						}
 
-						resultLog, err := testResultLogContent(resultLogPth)
-						if err != nil {
-							log.Warn("Failed to read test result, error: %s", err)
-						}
-						if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", resultLog); err != nil {
-							log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", err)
+						if len(result.ErrorMessages) > 0 {
+							if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
+								log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
+							}
+
+							if resultLog != "" {
+								if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", resultLog); err != nil {
+									log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", err)
+								}
+							}
+
+							os.Exit(1)
 						}
 
-						os.Exit(1)
+						if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_TO_RUN_ID", result.TestRunID); err != nil {
+							log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_TO_RUN_ID", err)
+						}
+
+						log.Done("TestRunId (%s) is available in (%s) environment variable", result.TestRunID, "BITRISE_XAMARIN_TEST_TO_RUN_ID")
 					}
 				}
 			}
@@ -399,11 +431,9 @@ func main() {
 		log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
 	}
 
-	resultLog, err := testResultLogContent(resultLogPth)
-	if err != nil {
-		log.Warn("Failed to read test result, error: %s", err)
-	}
-	if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", resultLog); err != nil {
-		log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", err)
+	if resultLog != "" {
+		if err := exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", resultLog); err != nil {
+			log.Warn("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_FULL_RESULTS_TEXT", err)
+		}
 	}
 }

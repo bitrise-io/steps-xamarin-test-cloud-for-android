@@ -182,7 +182,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	testProjectOutputMap, err := builder.CollectXamarinUITestProjectOutputs(configs.XamarinConfiguration, configs.XamarinPlatform)
+	testProjectOutputMap, warnings, err := builder.CollectXamarinUITestProjectOutputs(configs.XamarinConfiguration, configs.XamarinPlatform)
+	for _, warning := range warnings {
+		log.Warn("%s", warning)
+	}
 	if err != nil {
 		log.Error("Failed to collect test project output, error: %s", err)
 		exportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed")

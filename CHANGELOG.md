@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.2.3)
+## Changelog (Current version: 2.0.0)
 
 -----------------
+
+### 2.0.0 (2016 Oct 19)
+
+* [fbcf426] bitrise.yml format version update
+* [3d01dee] prepare for 2.0.0
+* [40c59be] Go xamarin (#20)
 
 ### 1.2.3 (2016 Sep 07)
 
@@ -61,4 +67,4 @@
 
 -----------------
 
-Updated: 2016 Sep 07
+Updated: 2016 Oct 19

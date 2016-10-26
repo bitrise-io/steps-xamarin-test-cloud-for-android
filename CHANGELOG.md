@@ -1,6 +1,11 @@
-## Changelog (Current version: 2.0.0)
+## Changelog (Current version: 2.1.0)
 
 -----------------
+
+### 2.1.0 (2016 Oct 26)
+
+* [6ab88b3] prepare for 2.1.0
+* [4243b73] go-xamarin update (#21)
 
 ### 2.0.0 (2016 Oct 19)
 
@@ -67,4 +72,4 @@
 
 -----------------
 
-Updated: 2016 Oct 19
+Updated: 2016 Oct 26

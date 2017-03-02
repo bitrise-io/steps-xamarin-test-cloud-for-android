@@ -1,6 +1,11 @@
-## Changelog (Current version: 2.1.0)
+## Changelog (Current version: 2.1.1)
 
 -----------------
+
+### 2.1.1 (2017 Mar 02)
+
+* [d8b249e] prepare for 2.1.1
+* [1fd7407] godeps-update (#22)
 
 ### 2.1.0 (2016 Oct 26)
 
@@ -72,4 +77,4 @@
 
 -----------------
 
-Updated: 2016 Oct 26
+Updated: 2017 Mar 02

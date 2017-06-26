@@ -52,6 +52,7 @@ workflows:
         - xamarin_user: $USER
         - test_cloud_api_key: $API_KEY
         - test_cloud_devices: $DEVICES
+        - build_tool: msbuild
     - script:
         title: Output test
         is_always_run: true

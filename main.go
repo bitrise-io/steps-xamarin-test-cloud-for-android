@@ -112,6 +112,10 @@ func (configs ConfigsModel) validate() error {
 		return fmt.Errorf("Series - %s", err)
 	}
 
+	if err := input.ValidateWithOptions(configs.BuildTool, "msbuild", "xbuild", "mdtool"); err != nil {
+		return fmt.Errorf("BuildTool - %s", err)
+	}
+
 	return nil
 }
 

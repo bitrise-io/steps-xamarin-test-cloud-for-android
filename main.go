@@ -22,45 +22,52 @@ import (
 
 // ConfigsModel ...
 type ConfigsModel struct {
+	User    string
+	APIKey  string
+	Devices string
+	Series  string
+
 	XamarinSolution      string
 	XamarinConfiguration string
 	XamarinPlatform      string
 
-	User            string
-	APIKey          string
-	Devices         string
 	IsAsync         string
-	Series          string
 	Parallelization string
 	SignOptions     string
 	CustomOptions   string
-
-	BuildTool string
-	DeployDir string
+	BuildTool       string
+	DeployDir       string
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
 	return ConfigsModel{
+		User:    os.Getenv("xamarin_user"),
+		APIKey:  os.Getenv("test_cloud_api_key"),
+		Devices: os.Getenv("test_cloud_devices"),
+		Series:  os.Getenv("test_cloud_series"),
+
 		XamarinSolution:      os.Getenv("xamarin_project"),
 		XamarinConfiguration: os.Getenv("xamarin_configuration"),
 		XamarinPlatform:      os.Getenv("xamarin_platform"),
 
-		User:            os.Getenv("xamarin_user"),
-		APIKey:          os.Getenv("test_cloud_api_key"),
-		Devices:         os.Getenv("test_cloud_devices"),
 		IsAsync:         os.Getenv("test_cloud_is_async"),
-		Series:          os.Getenv("test_cloud_series"),
 		Parallelization: os.Getenv("test_cloud_parallelization"),
 		SignOptions:     os.Getenv("sign_parameters"),
 		CustomOptions:   os.Getenv("other_parameters"),
-
-		BuildTool: os.Getenv("build_tool"),
-		DeployDir: os.Getenv("BITRISE_DEPLOY_DIR"),
+		BuildTool:       os.Getenv("build_tool"),
+		DeployDir:       os.Getenv("BITRISE_DEPLOY_DIR"),
 	}
 }
 
 func (configs ConfigsModel) print() {
-	log.Infof("Build Configs:")
+	log.Infof("Testing:")
+
+	log.Printf("- User: %s", configs.User)
+	log.Printf("- APIKey: %s", configs.APIKey)
+	log.Printf("- Devices: %s", configs.Devices)
+	log.Printf("- Series: %s", configs.Series)
+
+	log.Infof("Configs:")
 
 	log.Printf("- XamarinSolution: %s", configs.XamarinSolution)
 	log.Printf("- XamarinConfiguration: %s", configs.XamarinConfiguration)
@@ -68,48 +75,36 @@ func (configs ConfigsModel) print() {
 
 	log.Infof("Xamarin Test Cloud Configs:")
 
-	log.Printf("- User: %s", configs.User)
-	log.Printf("- APIKey: %s", configs.APIKey)
-	log.Printf("- Devices: %s", configs.Devices)
 	log.Printf("- IsAsync: %s", configs.IsAsync)
-	log.Printf("- Series: %s", configs.Series)
 	log.Printf("- Parallelization: %s", configs.Parallelization)
 	log.Printf("- SignOptions: %s", configs.SignOptions)
 	log.Printf("- CustomOptions: %s", configs.CustomOptions)
-
-	log.Infof("Other Configs:")
-
 	log.Printf("- BuildTool: %s", configs.BuildTool)
 	log.Printf("- DeployDir: %s", configs.DeployDir)
 }
 
 func (configs ConfigsModel) validate() error {
-	if err := input.ValidateIfPathExists(configs.XamarinSolution); err != nil {
-		return fmt.Errorf("XamarinSolution - %s", err)
-	}
-
-	if err := input.ValidateIfNotEmpty(configs.XamarinConfiguration); err != nil {
-		return fmt.Errorf("XamarinConfiguration - %s", err)
-	}
-
-	if err := input.ValidateIfNotEmpty(configs.XamarinPlatform); err != nil {
-		return fmt.Errorf("XamarinPlatform - %s", err)
-	}
-
-	if err := input.ValidateIfNotEmpty(configs.APIKey); err != nil {
-		return fmt.Errorf("APIKey - %s", err)
-	}
-
 	if err := input.ValidateIfNotEmpty(configs.User); err != nil {
 		return fmt.Errorf("User - %s", err)
 	}
-
+	if err := input.ValidateIfNotEmpty(configs.APIKey); err != nil {
+		return fmt.Errorf("APIKey - %s", err)
+	}
 	if err := input.ValidateIfNotEmpty(configs.Devices); err != nil {
 		return fmt.Errorf("Devices - %s", err)
 	}
-
 	if err := input.ValidateIfNotEmpty(configs.Series); err != nil {
 		return fmt.Errorf("Series - %s", err)
+	}
+
+	if err := input.ValidateIfPathExists(configs.XamarinSolution); err != nil {
+		return fmt.Errorf("XamarinSolution - %s", err)
+	}
+	if err := input.ValidateIfNotEmpty(configs.XamarinConfiguration); err != nil {
+		return fmt.Errorf("XamarinConfiguration - %s", err)
+	}
+	if err := input.ValidateIfNotEmpty(configs.XamarinPlatform); err != nil {
+		return fmt.Errorf("XamarinPlatform - %s", err)
 	}
 
 	if err := input.ValidateWithOptions(configs.BuildTool, "msbuild", "xbuild", "mdtool"); err != nil {
@@ -142,6 +137,14 @@ func testResultLogContent(pth string) (string, error) {
 	return content, nil
 }
 
+func failf(format string, v ...interface{}) {
+	log.Errorf(format, v...)
+	if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
+		log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
+	}
+	os.Exit(1)
+}
+
 func main() {
 	configs := createConfigsModelFromEnvs()
 
@@ -149,13 +152,7 @@ func main() {
 	configs.print()
 
 	if err := configs.validate(); err != nil {
-		log.Errorf("Issue with input: %s", err)
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-		}
-
-		os.Exit(1)
+		failf("Issue with input: %s", err)
 	}
 
 	//
@@ -172,21 +169,19 @@ func main() {
 
 	builder, err := builder.New(configs.XamarinSolution, []constants.SDK{constants.SDKAndroid}, buildTool)
 	if err != nil {
-		log.Errorf("Failed to create xamarin builder, error: %s", err)
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-		}
-
-		os.Exit(1)
+		failf("Failed to create xamarin builder, error: %s", err)
 	}
 
 	callback := func(solutionName string, projectName string, sdk constants.SDK, testFramework constants.TestFramework, commandStr string, alreadyPerformed bool) {
 		fmt.Println()
-		if testFramework == constants.TestFrameworkXamarinUITest {
-			log.Infof("Building test project: %s", projectName)
+		if projectName == "" {
+			log.Infof("Building solution: %s", solutionName)
 		} else {
-			log.Infof("Building project: %s", projectName)
+			if testFramework == constants.TestFrameworkXamarinUITest {
+				log.Infof("Building test project: %s", projectName)
+			} else {
+				log.Infof("Building project: %s", projectName)
+			}
 		}
 
 		log.Donef("$ %s", commandStr)
@@ -206,24 +201,12 @@ func main() {
 		log.Warnf(warning)
 	}
 	if err != nil {
-		log.Errorf("Build failed, error: %s", err)
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-		}
-
-		os.Exit(1)
+		failf("Build failed, error: %s", err)
 	}
 
 	projectOutputMap, err := builder.CollectProjectOutputs(configs.XamarinConfiguration, configs.XamarinPlatform, startTime, endTime)
 	if err != nil {
-		log.Errorf("Failed to collect project outputs, error: %s", err)
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-		}
-
-		os.Exit(1)
+		failf("Failed to collect project outputs, error: %s", err)
 	}
 
 	testProjectOutputMap, warnings, err := builder.CollectXamarinUITestProjectOutputs(configs.XamarinConfiguration, configs.XamarinPlatform, startTime, endTime)
@@ -231,13 +214,10 @@ func main() {
 		log.Warnf("%s", warning)
 	}
 	if err != nil {
-		log.Errorf("Failed to collect test project output, error: %s", err)
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-		}
-
-		os.Exit(1)
+		failf("Failed to collect test project output, error: %s", err)
+	}
+	if len(testProjectOutputMap) == 0 {
+		failf("No testable output generated")
 	}
 	// ---
 
@@ -247,30 +227,17 @@ func main() {
 	pattern := filepath.Join(solutionDir, "packages/Xamarin.UITest.*/tools/test-cloud.exe")
 	testClouds, err := filepath.Glob(pattern)
 	if err != nil {
-		log.Errorf("Failed to find test-cloud.exe path with pattern (%s), error: %s", pattern, err)
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-			log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-		}
-
-		os.Exit(1)
+		failf("Failed to find test-cloud.exe path with pattern (%s), error: %s", pattern, err)
 	}
 	if len(testClouds) == 0 {
 		if err != nil {
-			log.Errorf("No test-cloud.exe found path with pattern (%s)", pattern)
-
-			if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-				log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-			}
-
-			os.Exit(1)
+			failf("No test-cloud.exe found path with pattern (%s)", pattern)
 		}
 	}
 
 	testCloud, err := testcloud.NewModel(testClouds[0])
 	if err != nil {
-		log.Errorf("Failed to create test cloud model, error: %s", err)
-		os.Exit(1)
+		failf("Failed to create test cloud model, error: %s", err)
 	}
 
 	testCloud.SetAPIKey(configs.APIKey)
@@ -289,13 +256,7 @@ func main() {
 	if configs.Parallelization != "none" {
 		parallelization, err := testcloud.ParseParallelization(configs.Parallelization)
 		if err != nil {
-			log.Errorf("Failed to parse parallelization, error: %s", err)
-
-			if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-				log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-			}
-
-			os.Exit(1)
+			failf("Failed to parse parallelization, error: %s", err)
 		}
 
 		testCloud.SetParallelization(parallelization)
@@ -306,13 +267,7 @@ func main() {
 	if configs.SignOptions != "" {
 		options, err := shellquote.Split(configs.SignOptions)
 		if err != nil {
-			log.Errorf("Failed to split params (%s), error: %s", configs.SignOptions, err)
-
-			if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-				log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-			}
-
-			os.Exit(1)
+			failf("Failed to split params (%s), error: %s", configs.SignOptions, err)
 		}
 
 		testCloud.SetSignOptions(options...)
@@ -323,13 +278,7 @@ func main() {
 	if configs.CustomOptions != "" {
 		options, err := shellquote.Split(configs.CustomOptions)
 		if err != nil {
-			log.Errorf("Failed to split params (%s), error: %s", configs.CustomOptions, err)
-
-			if err := tools.ExportEnvironmentWithEnvman("BITRISE_XAMARIN_TEST_RESULT", "failed"); err != nil {
-				log.Warnf("Failed to export environment: %s, error: %s", "BITRISE_XAMARIN_TEST_RESULT", err)
-			}
-
-			os.Exit(1)
+			failf("Failed to split params (%s), error: %s", configs.CustomOptions, err)
 		}
 
 		testCloud.SetCustomOptions(options...)

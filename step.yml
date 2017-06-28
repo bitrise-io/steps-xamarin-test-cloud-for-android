@@ -24,26 +24,9 @@ toolkit:
   go:
     package_name: github.com/bitrise-steplib/steps-xamarin-test-cloud-for-android
 inputs:
-  - xamarin_project: $BITRISE_PROJECT_PATH
-    opts:
-      title: Path to Xamarin Solution
-      description: |
-        Path to Xamarin Solution
-      is_required: true
-  - xamarin_configuration: Release
-    opts:
-      title: Xamarin project configuration
-      description: |
-        Xamarin project configuration
-      is_required: true
-  - xamarin_platform: Any CPU
-    opts:
-      title: Xamarin platform
-      description: |
-        Xamarin platform
-      is_required: true
   - xamarin_user:
     opts:
+      category: Testing
       title: "User email"
       summary: "User email"
       description: |
@@ -51,6 +34,7 @@ inputs:
       is_required: true
   - test_cloud_api_key:
     opts:
+      category: Testing
       title: "Api key"
       summary: "Api key"
       description: |
@@ -58,13 +42,43 @@ inputs:
       is_required: true
   - test_cloud_devices:
     opts:
+      category: Testing
       title: "Device selection id"
       summary: "Device selection id"
       description: |
         Device selection id from the Test Cloud upload dialog.
       is_required: true
+  - test_cloud_series: "master"
+    opts:
+      category: Testing
+      title: "Test series"
+      summary: "Test series"
+      description: |
+        Test series.
+  - xamarin_project: $BITRISE_PROJECT_PATH
+    opts:
+      category: Config
+      title: Path to Xamarin Solution
+      description: |
+        Path to Xamarin Solution
+      is_required: true
+  - xamarin_configuration: Release
+    opts:
+      category: Config
+      title: Xamarin project configuration
+      description: |
+        Xamarin project configuration
+      is_required: true
+  - xamarin_platform: Any CPU
+    opts:
+      category: Config
+      title: Xamarin platform
+      description: |
+        Xamarin platform
+      is_required: true
   - test_cloud_is_async: "yes"
     opts:
+      category: Debug
       title: "Don't wait for cloud test run to complete"
       summary: "Don't wait for cloud test run to complete"
       description: |
@@ -74,14 +88,9 @@ inputs:
       value_options:
       - "yes"
       - "no"
-  - test_cloud_series: "master"
-    opts:
-      title: "Test series"
-      summary: "Test series"
-      description: |
-        Test series.
   - test_cloud_parallelization: none
     opts:
+      category: Debug
       title: "Run tests in parallel by method/fixture"
       summary: "Run tests in parallel by method/fixture"
       description: |
@@ -92,6 +101,7 @@ inputs:
       - by_test_chunk
   - sign_parameters:
     opts:
+      category: Debug
       title: "Signing parameters"
       summary: "Signing parameters"
       description: |
@@ -109,6 +119,7 @@ inputs:
         `keystore <PATH-TO-KEYSTORE> <KEYSTORE-PASSWORD> <KEYALIAS> <KEYALIAS-PASSWORD>`
   - other_parameters:
     opts:
+      category: Debug
       title: "Other parameters"
       summary: "Other parameters"
       description: |
@@ -127,6 +138,17 @@ inputs:
         --app-name <APP-NAME> --category <NUNIT-CATEGORY> --sign-info <SIGN-INFO-SI-PATH>
         --app-name <APP-NAME> --fixture <NUNIT-FIXTURE> --sign-info <SIGN-INFO-SI-PATH>
         ```
+  - build_tool: "xbuild"
+    opts:
+      category: Debug
+      title: (Experimental) Which tool to use for building?
+      description: |-
+        Which tool to use for building?
+      value_options:
+      - xbuild
+      - msbuild
+      - mdtool
+      is_required: true
 outputs:
   - BITRISE_XAMARIN_TEST_RESULT:
     opts:

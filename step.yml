@@ -138,16 +138,15 @@ inputs:
         --app-name <APP-NAME> --category <NUNIT-CATEGORY> --sign-info <SIGN-INFO-SI-PATH>
         --app-name <APP-NAME> --fixture <NUNIT-FIXTURE> --sign-info <SIGN-INFO-SI-PATH>
         ```
-  - build_tool: "xbuild"
+  - build_tool: "msbuild"
     opts:
       category: Debug
       title: (Experimental) Which tool to use for building?
       description: |-
         Which tool to use for building?
       value_options:
-      - xbuild
       - msbuild
-      - mdtool
+      - xbuild
       is_required: true
 outputs:
   - BITRISE_XAMARIN_TEST_RESULT:
